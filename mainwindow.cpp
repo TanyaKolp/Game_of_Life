@@ -9,20 +9,20 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     m_IsStopped = false;
-    m-Model = new GameArray(32);
-    m_CentralWidget = new QWidget();
-    setCentralWidget(m_CentralWidget);
+    model = new GameArray(32);
+    centralWidget = new QWidget();
+    setCentralWidget(centralWidget);
 
     timer = new QTimer();
 
-    m_GridLayout = new QGridLayout();
-    m_CentralWidget->setLayout(m_GridLayout);
+    gridLayout = new QGridLayout();
+    centralWidget->setLayout(gridLayout);
 
     hboxLayout = new QHBoxLayout();
-    m_GridLayout->addLayout(hboxLayout, 0, 0);
+    gridLayout->addLayout(hboxLayout, 0, 0);
 
-    m_GameGridWidget = new GameGridWidget(m-Model);
-    hboxLayout->addWidget(m_GameGridWidget);
+    gameGridWidget = new GameGridWidget(model);
+    hboxLayout->addWidget(gameGridWidget);
 
     vboxLayout = new QVBoxLayout();
     hboxLayout->addLayout(vboxLayout);
@@ -41,11 +41,11 @@ MainWindow::MainWindow(QWidget *parent)
     vboxLayout->addWidget(newGameButton);
 
     populationLabel = new PopulationLabel();
-    populationLabel->setModel(m-Model);
+    populationLabel->setModel(model);
     vboxLayout->addWidget(populationLabel);
 
     plot = new QCustomPlot();
-    m_GridLayout->addWidget(plot);
+    gridLayout->addWidget(plot);
     // create graph and assign data to it:
     plot->addGraph();
     //    plot->graph(0)->setData(x, y);
@@ -54,7 +54,7 @@ MainWindow::MainWindow(QWidget *parent)
     plot->yAxis->setLabel("Population");
     // set axes ranges, so we see all data:
     plot->xAxis->setRange(0, 10);
-    plot->yAxis->setRange(0, m-Model->getGridSize()*m-Model->getGridSize());
+    plot->yAxis->setRange(0, model->getGridSize()*model->getGridSize());
     plot->adjustSize();
     plot->replot();
 
@@ -63,7 +63,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(pauseContinueButton, SIGNAL(clicked()), this, SLOT(onPauseContinueButton()));
     connect(newGameButton, SIGNAL(clicked()), this, SLOT(onNewGameButton()));
 
-    connect(m_GameGridWidget, SIGNAL(needRepaint()), this, SLOT(update()));
+    connect(gameGridWidget, SIGNAL(needRepaint()), this, SLOT(update()));
     connect(timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
 }
 
@@ -78,9 +78,9 @@ void MainWindow::onStartGameButton()
 
     newGameButton->setDisabled(true);
     startGameButton->setDisabled(true);
-    m_GameGridWidget->setDisabled(true);
+    gameGridWidget->setDisabled(true);
 
-    plot->graph(0)->addData(0, m-Model->getAliveCellAmount());
+    plot->graph(0)->addData(0, model->getAliveCellAmount());
     plot->graph(0)->rescaleAxes();
     //timer
     timer->start(m_Interval);
@@ -105,11 +105,11 @@ void MainWindow::onPauseContinueButton()
 
 void MainWindow::onNewGameButton()
 {
-    delete m-Model;
-    m-Model = new GameArray(32);
+    delete model;
+    model = new GameArray(32);
     plot->graph(0)->data()->clear();
     plot->replot();
-    m_GameGridWidget->setEnabled(true);
+    gameGridWidget->setEnabled(true);
 
     pauseContinueButton->setDisabled(true);
     pauseContinueButton->setText(tr("Pause"));
@@ -121,12 +121,12 @@ void MainWindow::onNewGameButton()
 
 void MainWindow::onTimeout()
 {
-    m-Model->computeNextGeneration();
-    plot->xAxis->setRange(0, m-Model->getCurrentGenerationNumber());
+    model->computeNextGeneration();
+    plot->xAxis->setRange(0, model->getCurrentGenerationNumber());
     plot->graph(0)->rescaleAxes();
-    plot->graph(0)->addData(m-Model->getCurrentGenerationNumber(), m-Model->getAliveCellAmount());
+    plot->graph(0)->addData(model->getCurrentGenerationNumber(), model->getAliveCellAmount());
     plot->replot();
-    if (m-Model->isGameOver()){
+    if (model->isGameOver()){
         timer->stop();
         newGameButton->setDisabled(false);
     }
