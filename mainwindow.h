@@ -1,7 +1,6 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "gamegridwidget.h"
 
 #include <QFrame>
 #include <QGridLayout>
@@ -11,7 +10,9 @@
 #include <QDebug>
 #include <QTimer>
 
-#include <model/game.h>
+#include "gamegridwidget.h"
+
+#include <model/gamearray.h>
 
 #include <view/populationlabel.h>
 
@@ -33,7 +34,7 @@ public  slots:
     void onTimeout();
 
 private:
-    Game* model;
+    GameArray* model;
 
     GameGridWidget* gameGridWidget;
     QWidget* centralWidget;
@@ -50,8 +51,8 @@ private:
 
     QFrame* test;
 
-    bool isStopped;
-    int interval = 200;
+    bool m_IsStopped;
+    int m_Interval = 200;
 
 };
 #endif // MAINWINDOW_H

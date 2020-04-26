@@ -16,89 +16,84 @@ GameArray::GameArray(int sizeValue)
 // размещается в куче, должно быть оттуда удалено.
 // Память, выделенная в конструкторе, нигде не освобождается.
 GameArray::GameArray(int sizeValue) :
-	size(sizeValue)						// A.K. инициализировать лучше так
+    m_Size(sizeValue)						// A.K. инициализировать лучше так
 {
-    baseGameArray = new TArrayData(size, TBoolVector(sizeValue, 0));
-    nextGameArray = new TArrayData(size, TBoolVector(sizeValue, 0));
-}
-
-void GameArray::clearGame()
-{
-    baseGameArray = new vector<vector<bool> >(size, vector< bool >(size, 0));
-    cellAmount = 0;
-    generationNumber = 0;
-    gameOver = false;
+    m_GenerationNumber = 0;
+    m_GameOver = false;
+    m_CellAmount = 0;
+    baseGameArray = new TArrayData(sizeValue, TBoolVector(sizeValue, 0));
 }
 
 QList<QPoint> GameArray::computeNextGeneration()
 {
     QList<QPoint> nextGen;
-    nextGameArray = new vector<vector<bool> >(size, vector< bool >(size, 0));
-    for (int x = 0;  x < size; x++)
-//    {
-        for (int y = 0;  y < size; y++)
+    nextGameArray = new TArrayData(m_Size, TBoolVector(m_Size, 0));
+    for (int x = 0;  x < m_Size; x++)
+    {
+        for (int y = 0;  y < m_Size; y++)
         {
             if (willSurvive(x, y)){
 				// A.K. Можно так: (*nextGameArray)[x][y] = true; // (это общая проблема данного файла)
-                nextGameArray->operator[](x).operator[](y).operator=(true);
+                (*nextGameArray)[x][y] = true;
                 nextGen.push_back(QPoint(x,y));
             }
-//        }
+        }
     }
 
     checkGameOverConditions();
     changeGeneration();
-    generationNumber++;
+    m_GenerationNumber++;
     return nextGen;
 }
 
 int GameArray::getCurrentGenerationNumber() const
 {
-    return generationNumber;
+    return m_GenerationNumber;
 }
 
-int GameArray::getAliveCellAmount()	// A.K. почему не const?
+int GameArray::getAliveCellAmount()	const// A.K. почему не const?
 {
-    return cellAmount;
+    return m_CellAmount;
 }
 
 QList<QPoint> GameArray::getAliveCellList()
 {
     QList<QPoint> p;
-    for ( int x = 0; x < size; x++)
+    for ( int x = 0; x < m_Size; x++)
 //	{
-        for (int y = 0;  y < size; y++)
+        for (int y = 0;  y < m_Size; y++)
         {
             // A.K. Можно написать так: bool cell = (*baseGameArray)[x][y];
-			bool cell = baseGameArray->operator[](x).operator[](y);
+            bool cell = (*baseGameArray)[x][y];
             if (cell)
 //			{
                 p.push_back(QPoint(x,y));
 //			}
         }
 //    }
-    cellAmount = p.size();
+    m_CellAmount = p.size();
     return p;
 }
 
 void GameArray::addOrDeleteAliveCell(QPoint cell)
 {
-    if (baseGameArray->operator[](cell.x()).operator[](cell.y())){
-        baseGameArray->operator[](cell.x()).operator[](cell.y()).operator=(false);
+    if ((*baseGameArray)[cell.x()][cell.y()]){
+        (*baseGameArray)[cell.x()][cell.y()] = false;
     } else {
-        baseGameArray->operator[](cell.x()).operator[](cell.y()).operator=(true);
+        (*baseGameArray)[cell.x()][cell.y()] = true;
     }
 }
 
 void GameArray::changeGeneration()
 {
+    delete baseGameArray;
     baseGameArray = nextGameArray;
 }
 
 bool GameArray::willSurvive(int x, int y)
 {
     int neighborsCount = countNeighbors(x, y);
-    bool cell = baseGameArray->operator[](x).operator[](y);
+    bool cell = (*baseGameArray)[x][y];
     if (neighborsCount == 3){
         return true;
     } else if (cell == true && neighborsCount == 2){
@@ -115,7 +110,7 @@ int GameArray::countNeighbors(int x, int y)
             if (nx == x && ny == y){
                 continue;
             }
-            bool alive = baseGameArray->operator[]((nx+size)%size).operator[]((ny+size)%size);
+            bool alive = (*baseGameArray)[(nx+m_Size)%m_Size][(ny+m_Size)%m_Size];
             if (alive){
                 count++;
             }
@@ -129,9 +124,9 @@ void GameArray::checkGameOverConditions()
     QList<QPoint> currentGenList;
     QList<QPoint> nextGenList;
 
-    for ( int x = 0; x < size; x++)
+    for ( int x = 0; x < m_Size; x++)
     {
-        for (int y = 0;  y < size; y++)
+        for (int y = 0;  y < m_Size; y++)
         {
             if (nextGameArray->operator[](x).operator[](y)){
                 nextGenList.push_back(QPoint(x,y));
@@ -143,22 +138,22 @@ void GameArray::checkGameOverConditions()
     }
 
     if (nextGenList.size() == 0){
-        gameOver = true;
+        m_GameOver = true;
         return;
     }
 
     if (nextGenList.operator==(currentGenList)){
-        gameOver = true;
+        m_GameOver = true;
     }
 }
 
-int GameArray::getGridSize()
+int GameArray::getGridSize() const
 {
-    return size;
+    return m_Size;
 }
 
-bool GameArray::isGameOver()
+bool GameArray::isGameOver() const
 {
-    return gameOver;
+    return m_GameOver;
 }
 

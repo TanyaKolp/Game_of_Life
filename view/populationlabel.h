@@ -4,7 +4,7 @@
 #include <QLabel>
 #include <QWidget>
 
-#include <model/game.h>
+#include <model/gamearray.h>
 
 class PopulationLabel : public QLabel
 {
@@ -12,12 +12,12 @@ class PopulationLabel : public QLabel
 public:
     explicit PopulationLabel(QWidget *parent = 0);
 
-    void setModel(Game* modelValue);
+    void setModel(GameArray* modelValue);
 
 signals:
 
 private:
-    Game* model;
+    GameArray* m_Model;
 
 
     // QWidget interface

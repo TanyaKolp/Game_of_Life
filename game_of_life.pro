@@ -21,18 +21,13 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     model/gamearray.cpp \
-    model/gamehash.cpp \
-    testframe.cpp \
     view/populationlabel.cpp
 
 HEADERS += \
     gamegridwidget.h \
     lib/qcustomplot.h \
     mainwindow.h \
-    model/game.h \
     model/gamearray.h \
-    model/gamehash.h \
-    testframe.h \
     view/populationlabel.h
 
 # Default rules for deployment.

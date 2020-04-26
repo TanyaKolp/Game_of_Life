@@ -15,8 +15,8 @@
 
 // A.K. так надо
 #include <QList>
+#include <QPoint>
 #include <vector>
-#include "game.h"
 
 // A.K. Страж включения ставится строго сверху; для отклонения от этого правила
 // нужны веские основания.
@@ -34,21 +34,20 @@
 
 
 // A.K. имена функций лучше выравнивать, повышая тем самым читаемость кода
-class GameArray : public Game
+class GameArray
 {
 public:
     GameArray(int sizeValue);
 
     // Game interface
 public:
-    void			clearGame();
     QList<QPoint>	computeNextGeneration();
     int				getCurrentGenerationNumber() const;
-    int				getAliveCellAmount();
+    int				getAliveCellAmount() const;
     QList<QPoint>	getAliveCellList();
     void			addOrDeleteAliveCell(QPoint cell);
-    int				getGridSize();
-    bool			isGameOver();
+    int				getGridSize() const;
+    bool			isGameOver() const;
 	
     // GameArray interface
 private:
@@ -70,10 +69,10 @@ private:
 	// использовать.
 	// Мы используем префикс m_, а имена после подчеркивания пишем с
 	// большой буквы
-    int				size;				// m_Size
-    int				cellAmount;			// m_CellAmount;
-    int				generationNumber;	// m_GenerationNumber
-    bool			gameOver;			// m_GameOver
+    int				m_Size;				// m_Size
+    int				m_CellAmount;		// m_CellAmount;
+    int				m_GenerationNumber;	// m_GenerationNumber
+    bool			m_GameOver;			// m_GameOver
 
     void			changeGeneration();
     bool			willSurvive(int x, int y);

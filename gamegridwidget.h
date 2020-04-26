@@ -8,16 +8,14 @@
 #include <QSet>
 #include <QList>
 
-#include <model/game.h>
-
-using namespace std;
+#include <model/gamearray.h>
 
 class GameGridWidget : public QFrame
 {
     Q_OBJECT
 public:
     explicit GameGridWidget(QWidget *parent = 0);
-    GameGridWidget(Game* modelValue);
+    GameGridWidget(GameArray* modelValue);
 
 signals:
     void populationChanged(int size);
@@ -30,8 +28,8 @@ protected:
     void paintEvent(QPaintEvent*);
 
 private:
-    Game* model;
-    int gridSize;
+    GameArray* m_Model;
+    int m_GridSize;
 
     void drawCell(QPainter& painter, int step, QPoint pos);
 
