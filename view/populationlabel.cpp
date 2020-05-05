@@ -12,7 +12,6 @@ void PopulationLabel::setModel(GameArray* modelValue)
     m_Model = modelValue;
 }
 
-
 void PopulationLabel::paintEvent(QPaintEvent * e)
 {
     QLabel::paintEvent(e);

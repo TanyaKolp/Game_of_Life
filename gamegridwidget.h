@@ -10,6 +10,13 @@
 
 #include <model/gamearray.h>
 
+/*
+	A.K. Архитектура неудачная - надо сделать GameArray потомком QObject,
+	создать сигнал changed, а в слоте данного класса, который будет этот
+	самый changed обрабатывать, вызывать update(), а не возбуждать сигнал
+	needRepaint().
+*/
+
 class GameGridWidget : public QFrame
 {
     Q_OBJECT
@@ -18,7 +25,7 @@ public:
     GameGridWidget(GameArray* modelValue);
 
 signals:
-    void populationChanged(int size);
+    void populationChanged(int size);	// A.K. этот сигнал в данном классе не вызывается
     void needRepaint();
 
 public slots:

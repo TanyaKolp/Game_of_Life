@@ -1,82 +1,49 @@
 #ifndef GAMEARRAY_H
-#define GAMEARRAY_H	// A.K. - перенесено
+#define GAMEARRAY_H
 
-// A.K. 
-// 1) Свои include следует ставить после системных
-// 2) cледует следить за дублированием include'ов (<vector> сдублирован)
-// 3) мы в своих исходниках ставим сначала файлы Qt, затем файлы STL, 
-//    затем файлы CRT (системные библиотеки C/C++), а затем уже свои файлы
-
-// A.K. было
-//#include "game.h"
-//#include <vector>
-//#include <QList>
-//#include <vector>	
-
-// A.K. так надо
 #include <QList>
 #include <QPoint>
 #include <vector>
 
-// A.K. Страж включения ставится строго сверху; для отклонения от этого правила
-// нужны веские основания.
-// В данном случае компилятор нагружается дополнительной работой по повторному
-// включению системных include'ов <vector>, <QList>, <QPoint>
-//#define GAMEARRAY_H	// A.K. - убрано
 
-// A.K. Ставить "using namespace std" в h-файлах - порочная практика
-// Дело в том, что во всех файлах, куда будет включен gamearray.h,
-// появится неявное подключение области имен std. Разработчик, который
-// будет использовать данный файл в качестве подключаемого будет зело удивлен
-// Как надо: using namespace std ставится в cpp-файле, а в h-файле пространство
-// имен следует указывать явно
-//using namespace std;	
-
-
-// A.K. имена функций лучше выравнивать, повышая тем самым читаемость кода
 class GameArray
 {
 public:
     GameArray(int sizeValue);
+	~GameArray();
 
     // Game interface
 public:
     QList<QPoint>	computeNextGeneration();
-    int				getCurrentGenerationNumber() const;
-    int				getAliveCellAmount() const;
+	
+	// А.К. подобные функции лучше реализовывать прямо в h-файлах
+	// Согласно стандарту, функции, реализация которых написана в h-файле,
+	// рассматриваются как подстановочные (inline); они работают быстрее, чем
+	// обычные, поскольку вызова, как такового, не производится - вместо вызова
+	// компилятор подставляет код тела функции
+	int				getCurrentGenerationNumber() const	{ return m_GenerationNumber; }
+	int				getAliveCellAmount() const			{ return m_CellAmount; }
+	int				getGridSize() const					{ return m_Size; }
+	bool			isGameOver() const					{ return m_GameOver; }
+	
     QList<QPoint>	getAliveCellList();
-    void			addOrDeleteAliveCell(QPoint cell);
-    int				getGridSize() const;
-    bool			isGameOver() const;
+    void			addOrDeleteAliveCell(const QPoint& cell);
 	
     // GameArray interface
 private:
-	
-	// A.K. синтаксически, это правильно, но лучше в таких конструкциях 
-	// использовать typedef'ы
-//    vector< vector<bool> >* baseGameArray;
-//    vector< vector<bool> >* nextGameArray;
-	
-	// новый код
 	typedef std::vector<bool> TBoolVector;
 	typedef std::vector<TBoolVector> TArrayData;
 	TArrayData*		baseGameArray;
 	TArrayData*		nextGameArray;
 	
-	// A.K. Синтаксически все правильно. Но, при выборе имен переменных,
-	// лучше использовать суффиксы/префиксы для private-переменных членов
-	// класса. Для public-членов, напротив, префиксы и суффиксы лучше не
-	// использовать.
-	// Мы используем префикс m_, а имена после подчеркивания пишем с
-	// большой буквы
-    int				m_Size;				// m_Size
-    int				m_CellAmount;		// m_CellAmount;
-    int				m_GenerationNumber;	// m_GenerationNumber
-    bool			m_GameOver;			// m_GameOver
+    int				m_Size;
+    int				m_CellAmount;
+    int				m_GenerationNumber;
+    bool			m_GameOver;
 
     void			changeGeneration();
     bool			willSurvive(int x, int y);
-    int				countNeighbors(int x, int y);
+    int				countNeighbours(int x, int y);
     void			checkGameOverConditions();
 };
 

@@ -1,27 +1,27 @@
 #include "gamearray.h"
 
-using namespace std;	// A.K. Добавлено
-/*
-// старый код
-GameArray::GameArray(int sizeValue)
-{
-    size = sizeValue;
-    baseGameArray = new vector<vector<bool> >(sizeValue, vector< bool >(sizeValue, 0));
-    nextGameArray = new vector<vector<bool> >(sizeValue, vector< bool >(sizeValue, 0));
-}
-*/
+using namespace std;
 
-// новый код
-// A.K. В отличие от java, в C++ нет сборщика мусора, поэтому все, что
-// размещается в куче, должно быть оттуда удалено.
-// Память, выделенная в конструкторе, нигде не освобождается.
+// A.K. Неинициализированные переменные - зло
+// Все переменные - члены класса, не имеющие конструкторов по умолчанию, должны
+// быть инициализированы, хоть компилятор этого и не требует.
+// Если такая переменная не инициализирована, то в ней в release-сборке будет мусор.
 GameArray::GameArray(int sizeValue) :
-    m_Size(sizeValue)						// A.K. инициализировать лучше так
+	baseGameArray(new TArrayData(sizeValue, TBoolVector(sizeValue, 0))),
+	nextGameArray(0),
+    m_Size(sizeValue),
+	m_CellAmount(0),
+	m_GenerationNumber(0),
+	m_GameOver(false)
+	
 {
-    m_GenerationNumber = 0;
-    m_GameOver = false;
-    m_CellAmount = 0;
-    baseGameArray = new TArrayData(sizeValue, TBoolVector(sizeValue, 0));
+}
+
+GameArray::~GameArray()
+{
+	// A.K. выделенная память все-таки полностью не освобождалась
+	delete baseGameArray;
+	delete nextGameArray;	
 }
 
 QList<QPoint> GameArray::computeNextGeneration()
@@ -29,16 +29,12 @@ QList<QPoint> GameArray::computeNextGeneration()
     QList<QPoint> nextGen;
     nextGameArray = new TArrayData(m_Size, TBoolVector(m_Size, 0));
     for (int x = 0;  x < m_Size; x++)
-    {
         for (int y = 0;  y < m_Size; y++)
-        {
-            if (willSurvive(x, y)){
-				// A.K. Можно так: (*nextGameArray)[x][y] = true; // (это общая проблема данного файла)
+            if (willSurvive(x, y))
+			{
                 (*nextGameArray)[x][y] = true;
                 nextGen.push_back(QPoint(x,y));
             }
-        }
-    }
 
     checkGameOverConditions();
     changeGeneration();
@@ -46,114 +42,142 @@ QList<QPoint> GameArray::computeNextGeneration()
     return nextGen;
 }
 
-int GameArray::getCurrentGenerationNumber() const
-{
-    return m_GenerationNumber;
-}
-
-int GameArray::getAliveCellAmount()	const// A.K. почему не const?
-{
-    return m_CellAmount;
-}
-
 QList<QPoint> GameArray::getAliveCellList()
 {
-    QList<QPoint> p;
-    for ( int x = 0; x < m_Size; x++)
-//	{
-        for (int y = 0;  y < m_Size; y++)
+    // A.K. В этом коде есть некая странность
+	// С одной стороны, данная функция возвращает перечень точек
+	// с другой стороны - записывает, сколько их.
+	// Логика подсказывает, что подсчет количества точек следует делать там,
+	// где эти самые точки устанавливаются, а данная функция должна стать
+	// константной.
+	
+	QList<QPoint> p;
+    for (int x = 0;  x < m_Size;  x++)
+        for (int y = 0;  y < m_Size;  y++)
         {
-            // A.K. Можно написать так: bool cell = (*baseGameArray)[x][y];
-            bool cell = (*baseGameArray)[x][y];
+/*
+			bool cell = (*baseGameArray)[x][y];
             if (cell)
-//			{
                 p.push_back(QPoint(x,y));
-//			}
+*/
+			// A.K. лучше так - быстрее и меньше памяти расходуется
+			if ((*baseGameArray)[x][y])
+                p.push_back(QPoint(x,y));
         }
-//    }
-    m_CellAmount = p.size();
+	
+    m_CellAmount = p.size();	// A.K. данному коду здесь не место, он должен быть в computeNextGeneration
     return p;
 }
 
-void GameArray::addOrDeleteAliveCell(QPoint cell)
+void GameArray::addOrDeleteAliveCell(const QPoint& cell)
 {
-    if ((*baseGameArray)[cell.x()][cell.y()]){
+/*
+	if ((*baseGameArray)[cell.x()][cell.y()])
+	{
         (*baseGameArray)[cell.x()][cell.y()] = false;
-    } else {
+    } 
+	else 
+	{
         (*baseGameArray)[cell.x()][cell.y()] = true;
     }
+*/
+	
+	// A.K. Лучше написать так; насколько я понимаю - то же самое
+	// если я правильно понял твой код - написана простая инверсия
+	(*baseGameArray)[cell.x()][cell.y()] = !(*baseGameArray)[cell.x()][cell.y()];
 }
 
 void GameArray::changeGeneration()
 {
     delete baseGameArray;
     baseGameArray = nextGameArray;
+	
+	// A.K. если так не сделать, будут проблемы при уничтожении данных в деструкторе
+	// Если не будет очистки памяти в деструкторе, будет утечка.
+	nextGameArray = 0;	
 }
 
 bool GameArray::willSurvive(int x, int y)
 {
-    int neighborsCount = countNeighbors(x, y);
+	int neighbourCount = countNeighbours(x, y);
+/*
     bool cell = (*baseGameArray)[x][y];
-    if (neighborsCount == 3){
+	
+    if (neighborsCount == 3)
         return true;
-    } else if (cell == true && neighborsCount == 2){
+    else if (cell == true && neighborsCount == 2)
         return true;
-    }
     return false;
+*/	
+	// A.K. Данный кусок кода можно написать одним выражением
+	return 
+		neighbourCount == 3 || 
+		((*baseGameArray)[x][y] && neighbourCount == 2);
 }
 
-int GameArray::countNeighbors(int x, int y)
+int GameArray::countNeighbours(int x, int y)
 {
     int count = 0;
-    for (int nx = x - 1;  nx <= x + 1;  nx++){
-        for (int ny = y - 1; ny <= y + 1; ny++){
-            if (nx == x && ny == y){
+	
+	// A.K. Здесь это не принципиально, ибо цикл короткий, но условие конца 
+	// цикла for вычисляется на каждой итерации заново. Поэтому, если 
+	// уcловие конца заведомо не изменяется в ходе работы цикла, то лучше
+	// вычислить условие один раз и сложить его в отдельную переменную
+	// (int xLast - x + 1, yLast = y + 1)
+    for (int nx = x - 1;  nx <= x + 1;  nx++)
+        for (int ny = y - 1;  ny <= y + 1;  ny++)
+		{
+            if (nx == x && ny == y)
                 continue;
-            }
+			// A.K. Код мне непонятен
+			// когда такое написано, лучше комментировать, зачем так написано
+			// Дело в том, что (n + s) % s == n % s, разве нет?
+			// Если я правильно понял, ты написала зацикленность игрового поля в
+			// обоих направлениях
             bool alive = (*baseGameArray)[(nx+m_Size)%m_Size][(ny+m_Size)%m_Size];
-            if (alive){
+            if (alive)
                 count++;
-            }
+			
+			// A.K. Я бы написал данный код так:
+//			if ((*baseGameArray)[nx % m_Size][ny % m_Size])
+//				++count;
         }
-    }
     return count;
 }
 
 void GameArray::checkGameOverConditions()
 {
-    QList<QPoint> currentGenList;
+	QList<QPoint> currentGenList;
     QList<QPoint> nextGenList;
 
-    for ( int x = 0; x < m_Size; x++)
-    {
+    for (int x = 0; x < m_Size; x++)
         for (int y = 0;  y < m_Size; y++)
         {
-            if (nextGameArray->operator[](x).operator[](y)){
+/*			// A.K.
+			if (nextGameArray->operator[](x).operator[](y))
+*/			
+			if ((*nextGameArray)[x][y])
                 nextGenList.push_back(QPoint(x,y));
-            }
-            if (baseGameArray->operator[](x).operator[](y)){
+/*			// A.K.
+            if (baseGameArray->operator[](x).operator[](y))
+*/
+			if ((*baseGameArray)[x][y])
                 currentGenList.push_back(QPoint(x,y));
-            }
         }
-    }
-
-    if (nextGenList.size() == 0){
+	
+/*	// A.K.
+    if (nextGenList.size() == 0)
+	{
         m_GameOver = true;
         return;
     }
 
-    if (nextGenList.operator==(currentGenList)){
+    if (nextGenList.operator==(currentGenList))
         m_GameOver = true;
-    }
-}
-
-int GameArray::getGridSize() const
-{
-    return m_Size;
-}
-
-bool GameArray::isGameOver() const
-{
-    return m_GameOver;
+*/
+	// лучше так - понятнее
+	m_GameOver = 
+		nextGenList.size() == 0 ||
+		nextGenList == currentGenList;
 }
 

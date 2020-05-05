@@ -21,6 +21,7 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     model/gamearray.cpp \
+    model/old/gamearray.cpp \
     view/populationlabel.cpp
 
 HEADERS += \
@@ -28,6 +29,7 @@ HEADERS += \
     lib/qcustomplot.h \
     mainwindow.h \
     model/gamearray.h \
+    model/old/gamearray.h \
     view/populationlabel.h
 
 # Default rules for deployment.
