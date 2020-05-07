@@ -2,21 +2,26 @@
 #define GAMEARRAY_H
 
 #include <QList>
+#include <QObject>
 #include <QPoint>
 #include <vector>
 
 
-class GameArray
+class GameArray : public QObject
 {
+    Q_OBJECT
 public:
     GameArray(int sizeValue);
 	~GameArray();
 
+signals:
+    void modelChanged();
     // Game interface
 public:
-    QList<QPoint>	computeNextGeneration();
+    void	computeNextGeneration();
+    void    cleanGame();
 	
-	// А.К. подобные функции лучше реализовывать прямо в h-файлах
+    // А.К. подобные функции лучше реализовывать прямо в h-файлах  +
 	// Согласно стандарту, функции, реализация которых написана в h-файле,
 	// рассматриваются как подстановочные (inline); они работают быстрее, чем
 	// обычные, поскольку вызова, как такового, не производится - вместо вызова
@@ -25,8 +30,8 @@ public:
 	int				getAliveCellAmount() const			{ return m_CellAmount; }
 	int				getGridSize() const					{ return m_Size; }
 	bool			isGameOver() const					{ return m_GameOver; }
-	
-    QList<QPoint>	getAliveCellList();
+    QList<QPoint>*	getAliveCellList() const;
+
     void			addOrDeleteAliveCell(const QPoint& cell);
 	
     // GameArray interface

@@ -14,8 +14,6 @@
 
 #include <model/gamearray.h>
 
-#include <view/populationlabel.h>
-
 #include <lib/qcustomplot.h>
 
 class MainWindow : public QMainWindow
@@ -32,9 +30,10 @@ public  slots:
     void onNewGameButton();
 
     void onTimeout();
+    void onModelChanged();
 
 private:
-    GameArray* model;
+    GameArray* m_Model;
 
     GameGridWidget* gameGridWidget;
     QWidget* centralWidget;
@@ -44,15 +43,18 @@ private:
     QPushButton* startGameButton;
     QPushButton* pauseContinueButton;
     QPushButton* newGameButton;
-    PopulationLabel* populationLabel;
+    QLabel* populationLabel;
     QTimer* timer;
 
     QCustomPlot* plot;
 
-    QFrame* test;
-
     bool m_IsStopped;
-    int m_Interval = 200;
+    int m_Interval;
 
+    const char*  m_PopulationLabelPattern;
+
+    // QObject interface
+public:
+    bool eventFilter(QObject *, QEvent *);
 };
 #endif // MAINWINDOW_H

@@ -1,15 +1,16 @@
+#include <QString>
 #include "gamegridwidget.h"
 #include "mainwindow.h"
 
 #include <model/gamearray.h>
 
-#include <view/populationlabel.h>
-
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
+    : QMainWindow(parent),
+      m_IsStopped(false),
+      m_Interval(200),
+      m_PopulationLabelPattern("Population: %1\n# Generation: %2")
 {
-    m_IsStopped = false;
-    model = new GameArray(32);
+    m_Model = new GameArray(32);
     centralWidget = new QWidget();
     setCentralWidget(centralWidget);
 
@@ -21,7 +22,9 @@ MainWindow::MainWindow(QWidget *parent)
     hboxLayout = new QHBoxLayout();
     gridLayout->addLayout(hboxLayout, 0, 0);
 
-    gameGridWidget = new GameGridWidget(model);
+    gameGridWidget = new GameGridWidget();
+    gameGridWidget->installEventFilter(this);
+    gameGridWidget->setGridSize(m_Model->getGridSize());
     hboxLayout->addWidget(gameGridWidget);
 
     vboxLayout = new QVBoxLayout();
@@ -40,8 +43,7 @@ MainWindow::MainWindow(QWidget *parent)
     newGameButton->setText(tr("New Game"));
     vboxLayout->addWidget(newGameButton);
 
-    populationLabel = new PopulationLabel();
-    populationLabel->setModel(model);
+    populationLabel = new QLabel();
     vboxLayout->addWidget(populationLabel);
 
     plot = new QCustomPlot();
@@ -54,7 +56,7 @@ MainWindow::MainWindow(QWidget *parent)
     plot->yAxis->setLabel("Population");
     // set axes ranges, so we see all data:
     plot->xAxis->setRange(0, 10);
-    plot->yAxis->setRange(0, model->getGridSize()*model->getGridSize());
+    plot->yAxis->setRange(0, m_Model->getGridSize()*m_Model->getGridSize());
     plot->adjustSize();
     plot->replot();
 
@@ -63,7 +65,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(pauseContinueButton, SIGNAL(clicked()), this, SLOT(onPauseContinueButton()));
     connect(newGameButton, SIGNAL(clicked()), this, SLOT(onNewGameButton()));
 
-    connect(gameGridWidget, SIGNAL(needRepaint()), this, SLOT(update()));
+    connect(m_Model, SIGNAL(modelChanged()), this, SLOT(onModelChanged())),
     connect(timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
 }
 
@@ -80,7 +82,7 @@ void MainWindow::onStartGameButton()
     startGameButton->setDisabled(true);
     gameGridWidget->setDisabled(true);
 
-    plot->graph(0)->addData(0, model->getAliveCellAmount());
+    plot->graph(0)->addData(0, m_Model->getAliveCellAmount());
     plot->graph(0)->rescaleAxes();
     //timer
     timer->start(m_Interval);
@@ -105,10 +107,9 @@ void MainWindow::onPauseContinueButton()
 
 void MainWindow::onNewGameButton()
 {
-    delete model;
-    model = new GameArray(32);
+    m_Model->cleanGame();
+
     plot->graph(0)->data()->clear();
-    plot->replot();
     gameGridWidget->setEnabled(true);
 
     pauseContinueButton->setDisabled(true);
@@ -116,21 +117,53 @@ void MainWindow::onNewGameButton()
     m_IsStopped = false;
 
     startGameButton->setDisabled(false);
-    update();
+    onModelChanged();
 }
 
 void MainWindow::onTimeout()
 {
-    model->computeNextGeneration();
-    plot->xAxis->setRange(0, model->getCurrentGenerationNumber());
-    plot->graph(0)->rescaleAxes();
-    plot->graph(0)->addData(model->getCurrentGenerationNumber(), model->getAliveCellAmount());
-    plot->replot();
-    if (model->isGameOver()){
+    m_Model->computeNextGeneration();
+
+    if (m_Model->isGameOver()){
         timer->stop();
         newGameButton->setDisabled(false);
     }
+}
+
+void MainWindow::onModelChanged()
+{
+    populationLabel->setText(QString(m_PopulationLabelPattern)
+                             .arg(m_Model->getAliveCellAmount())
+                                  .arg(m_Model->getCurrentGenerationNumber())
+                             );
+
+    plot->xAxis->setRange(0, m_Model->getCurrentGenerationNumber());
+    plot->graph(0)->rescaleAxes();
+    plot->graph(0)->addData(m_Model->getCurrentGenerationNumber(),
+                            m_Model->getAliveCellAmount());
+    plot->replot();
+
+    gameGridWidget->setAliveCells(m_Model->getAliveCellList());
+
     update();
+}
+
+bool MainWindow::eventFilter(QObject * target, QEvent * event)
+{
+    if (event->type() == QEvent::MouseButtonPress){
+        if (target == gameGridWidget){
+          QMouseEvent* eMouse =  static_cast<QMouseEvent *>(event);
+          GameGridWidget* tWid = static_cast<GameGridWidget *>(target);
+
+          if (tWid->isEnabled()){
+            const QPoint pos = eMouse->pos();
+            int step = tWid->height()/tWid->gridSize();
+            m_Model->addOrDeleteAliveCell(QPoint(pos.x()/step, pos.y()/step));
+          }
+          return true;
+        }
+    }
+    return QMainWindow::eventFilter(target, event);
 }
 
 

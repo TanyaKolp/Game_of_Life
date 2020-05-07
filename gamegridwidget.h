@@ -11,7 +11,7 @@
 #include <model/gamearray.h>
 
 /*
-	A.K. Архитектура неудачная - надо сделать GameArray потомком QObject,
+    A.K. Архитектура неудачная - надо сделать GameArray потомком QObject,  +
 	создать сигнал changed, а в слоте данного класса, который будет этот
 	самый changed обрабатывать, вызывать update(), а не возбуждать сигнал
 	needRepaint().
@@ -22,11 +22,14 @@ class GameGridWidget : public QFrame
     Q_OBJECT
 public:
     explicit GameGridWidget(QWidget *parent = 0);
-    GameGridWidget(GameArray* modelValue);
+
+    void setGridSize(int GridSize);
+
+    void setAliveCells(QList<QPoint> *AliveCells);
+
+    int gridSize() const;
 
 signals:
-    void populationChanged(int size);	// A.K. этот сигнал в данном классе не вызывается
-    void needRepaint();
 
 public slots:
 
@@ -35,14 +38,11 @@ protected:
     void paintEvent(QPaintEvent*);
 
 private:
-    GameArray* m_Model;
-    int m_GridSize;
+    int m_GridSize; // default = 32
+    QList<QPoint>* m_AliveCells;
 
     void drawCell(QPainter& painter, int step, QPoint pos);
 
-    // QWidget interface
-protected:
-    void mousePressEvent(QMouseEvent* e) ;
 };
 
 #endif // GAMEGRID_H

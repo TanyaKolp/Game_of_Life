@@ -1,5 +1,8 @@
 #include "gamegridwidget.h"
 
+
+#include <iostream>
+
 #include <QLine>
 #include <QPainter>
 #include <QDebug>
@@ -9,18 +12,12 @@
 
 using namespace std;
 
-GameGridWidget::GameGridWidget(QWidget *parent)
+GameGridWidget::GameGridWidget(QWidget *parent) :
+    m_GridSize(32),
+    m_AliveCells(new QList<QPoint>)
 {
-
-}
-
-GameGridWidget::GameGridWidget(GameArray *modelValue)
-{
-    m_Model = modelValue;
     setFixedSize(320, 320);
     setFrameStyle(QFrame::StyledPanel | QFrame::Plain);
-
-    m_GridSize = m_Model->getGridSize();
 }
 
 void GameGridWidget::drawCell(QPainter& painter, int step, QPoint pos)
@@ -29,18 +26,6 @@ void GameGridWidget::drawCell(QPainter& painter, int step, QPoint pos)
     painter.setBrush(QBrush(Qt::black, Qt::SolidPattern));
     painter.drawEllipse(QPoint(pos.x()*step + step/2, pos.y()*step + step/2), pointerRadius, pointerRadius);
 }
-
-void GameGridWidget::mousePressEvent(QMouseEvent* event)
-{
-    const QPoint pos = event->pos();
-    int step = this->height()/m_GridSize;
-
-    QPoint point(pos.x()/step, pos.y()/step);
-    m_Model->addOrDeleteAliveCell(point);
-    emit needRepaint();
-}
-
-
 
 void GameGridWidget::paintEvent(QPaintEvent* e)
 {
@@ -56,8 +41,24 @@ void GameGridWidget::paintEvent(QPaintEvent* e)
     }
 
     //draw alive cell
-    QList<QPoint> aliveCellList = m_Model->getAliveCellList();
-    for (int i = 0; i < aliveCellList.size(); i++) {
-        drawCell(painter, step, aliveCellList[i]);
+    for (int i = 0; i < m_AliveCells->size(); i++) {
+        drawCell(painter, step, (*m_AliveCells)[i]);
     }
 }
+
+int GameGridWidget::gridSize() const
+{
+    return m_GridSize;
+}
+
+void GameGridWidget::setAliveCells(QList<QPoint> *AliveCells)
+{
+    delete m_AliveCells;
+    m_AliveCells = AliveCells;
+}
+
+void GameGridWidget::setGridSize(int GridSize)
+{
+    m_GridSize = GridSize;
+}
+

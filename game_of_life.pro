@@ -21,16 +21,12 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     model/gamearray.cpp \
-    model/old/gamearray.cpp \
-    view/populationlabel.cpp
 
 HEADERS += \
     gamegridwidget.h \
     lib/qcustomplot.h \
     mainwindow.h \
-    model/gamearray.h \
-    model/old/gamearray.h \
-    view/populationlabel.h
+    model/gamearray.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
