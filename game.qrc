@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>resources/game_ru_RU.qm</file>
+        <file>resources/game_ru_RU.ts</file>
+    </qresource>
+</RCC>

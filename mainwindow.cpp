@@ -1,4 +1,5 @@
 #include <QString>
+
 #include "gamegridwidget.h"
 #include "mainwindow.h"
 
@@ -8,8 +9,10 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
       m_IsStopped(false),
       m_Interval(200),
-      m_PopulationLabelPattern("Population: %1\n# Generation: %2")
+      m_PopulationLabelPattern(QT_TR_NOOP("Population: %1\n# Generation: %2"))
 {
+    setWindowTitle(tr("Game of Life"));
+
     m_Model = new GameArray(32);
     centralWidget = new QWidget();
     setCentralWidget(centralWidget);
@@ -44,6 +47,7 @@ MainWindow::MainWindow(QWidget *parent)
     vboxLayout->addWidget(newGameButton);
 
     populationLabel = new QLabel();
+    populationLabel->setText(tr(m_PopulationLabelPattern).arg(0).arg(0));
     vboxLayout->addWidget(populationLabel);
 
     plot = new QCustomPlot();
@@ -52,8 +56,8 @@ MainWindow::MainWindow(QWidget *parent)
     plot->addGraph();
     //    plot->graph(0)->setData(x, y);
     // give the axes some labels:
-    plot->xAxis->setLabel("#Generation");
-    plot->yAxis->setLabel("Population");
+    plot->xAxis->setLabel(tr("#Generation"));
+    plot->yAxis->setLabel(tr("Population"));
     // set axes ranges, so we see all data:
     plot->xAxis->setRange(0, 10);
     plot->yAxis->setRange(0, m_Model->getGridSize()*m_Model->getGridSize());
@@ -65,7 +69,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(pauseContinueButton, SIGNAL(clicked()), this, SLOT(onPauseContinueButton()));
     connect(newGameButton, SIGNAL(clicked()), this, SLOT(onNewGameButton()));
 
-    connect(m_Model, SIGNAL(modelChanged()), this, SLOT(onModelChanged())),
+    connect(m_Model, SIGNAL(modelChanged()), this, SLOT(onModelChanged()));
     connect(timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
 }
 
@@ -91,13 +95,13 @@ void MainWindow::onStartGameButton()
 void MainWindow::onPauseContinueButton()
 {
     if (m_IsStopped){
-        pauseContinueButton->setText("Pause");
+        pauseContinueButton->setText(tr("Pause"));
         newGameButton->setDisabled(true);
 
         m_IsStopped = false;
         timer->start(m_Interval);
     } else {
-        pauseContinueButton->setText("Continue");
+        pauseContinueButton->setText(tr("Continue"));
         newGameButton->setDisabled(false);
 
         m_IsStopped = true;
@@ -132,7 +136,7 @@ void MainWindow::onTimeout()
 
 void MainWindow::onModelChanged()
 {
-    populationLabel->setText(QString(m_PopulationLabelPattern)
+    populationLabel->setText(tr(m_PopulationLabelPattern)
                              .arg(m_Model->getAliveCellAmount())
                                   .arg(m_Model->getCurrentGenerationNumber())
                              );
